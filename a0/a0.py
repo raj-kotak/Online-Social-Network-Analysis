@@ -37,10 +37,10 @@ import sys
 import time
 from TwitterAPI import TwitterAPI
 
-consumer_key = 'fixme'
-consumer_secret = 'fixme'
-access_token = 'fixme'
-access_token_secret = 'fixme'
+consumer_key = 'VA00WIXDSMZMiDFWmr8aylbDr'
+consumer_secret = 'gFckFgd3kxzK284j28DQvniUoLeO5u8hVZRD1OtFGAgErmiXFu'
+access_token = '3738267792-FEw1oJ1dqQQJG74MWeRv2fPf7Z6czrikpvUV81H'
+access_token_secret = '595OxWzmCClyKvxvZKOAgFGhwdn85IkKNBeQZSP0SCnxH'
 
 
 # This method is done for you.
@@ -67,8 +67,13 @@ def read_screen_names(filename):
     ['DrJillStein', 'GovGaryJohnson', 'HillaryClinton', 'realDonaldTrump']
     """
     ###TODO
-    pass
 
+    with open('D:\\raj\\mcs_stuff\\courses\\CS579 OSNA\\Assigments\\raj-kotak\\a0\\'+filename, mode='r') as f:
+        screen_names = f.readlines()
+
+    screen_names = [name.strip() for name in screen_names] 
+
+    return screen_names
 
 # I've provided the method below to handle Twitter's rate limiting.
 # You should call this method whenever you need to access the Twitter API.
