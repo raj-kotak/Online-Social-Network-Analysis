@@ -118,8 +118,12 @@ def get_users(twitter, screen_names):
     [6253282, 783214]
     """
     ###TODO
-    pass
-
+    users = []
+    for name in screen_names:
+        user_details = twitter.request('users/lookup', {'screen_name':name})
+        for details in user_details.get_iterator():
+            users.append(details)
+    return users
 
 def get_friends(twitter, screen_name):
     """ Return a list of Twitter IDs for users that this person follows, up to 5000.
@@ -143,8 +147,16 @@ def get_friends(twitter, screen_name):
     [695023, 1697081, 8381682, 10204352, 11669522]
     """
     ###TODO
-    pass
+    response = twitter.request('friends/ids', {'screen_name': screen_name, 'count': 5000})
+    
+    if 'message' in response and response['code'] == 88:
+        response = robust_request(twitter, 'friends/ids', screen_name, 5)
 
+    user_friends = []
+    for res in response.get_iterator():
+        user_friends.append(res)
+
+    return user_friends
 
 def add_all_friends(twitter, users):
     """ Get the list of accounts each user follows.
@@ -165,8 +177,9 @@ def add_all_friends(twitter, users):
     [695023, 1697081, 8381682, 10204352, 11669522]
     """
     ###TODO
-    pass
-
+    for user in users:
+        friends = sorted(get_friends(twitter, user['screen_name']))
+        user['friends'] = friends
 
 def print_num_friends(users):
     """Print the number of friends per candidate, sorted by candidate name.
@@ -177,7 +190,7 @@ def print_num_friends(users):
         Nothing
     """
     ###TODO
-    pass
+    [print(user['screen_name'], len(user['friends'])) for user in users]
 
 
 def count_friends(users):
@@ -194,8 +207,13 @@ def count_friends(users):
     [(2, 3), (3, 2), (1, 1)]
     """
     ###TODO
-    pass
+    friends_list = []
+    for user in users:
+        for f in user['friends']:
+            friends_list.append(f)
 
+    count = Counter(friends_list)
+    return count
 
 def friend_overlap(users):
     """
