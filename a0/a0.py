@@ -147,10 +147,7 @@ def get_friends(twitter, screen_name):
     [695023, 1697081, 8381682, 10204352, 11669522]
     """
     ###TODO
-    response = twitter.request('friends/ids', {'screen_name': screen_name, 'count': 5000})
-    
-    if 'message' in response and response['code'] == 88:
-        response = robust_request(twitter, 'friends/ids', screen_name, 5)
+    response = twitter.request('friends/ids', {'screen_name': screen_name, 'count': 5000})    
 
     user_friends = []
     for res in response.get_iterator():
@@ -209,10 +206,10 @@ def count_friends(users):
     ###TODO
     friends_list = []
     for user in users:
-        for f in user['friends']:
-            friends_list.append(f)
-
+        friends_list.extend(user['friends'])
+    print(len(friends_list))
     count = Counter(friends_list)
+    
     return count
 
 def friend_overlap(users):
@@ -237,7 +234,19 @@ def friend_overlap(users):
     [('a', 'c', 3), ('a', 'b', 2), ('b', 'c', 2)]
     """
     ###TODO
-    pass
+    overlap_list = []
+    overlap_tuple = ()
+    for i in range(0, len(users)):
+        if (i+1) < len(users):
+            for j in range((i+1), len(users)):
+                overlap_length = len((set(users[i]['friends']).intersection(set(users[j]['friends']))))
+                overlap_tuple = (users[i]['screen_name'], users[j]['screen_name'], overlap_length)
+                overlap_list.append(overlap_tuple)
+                overlap_tuple = ()
+        
+    sorted_overlap_list = sorted(overlap_list, key=lambda x: x[2], reverse=True)        
+
+    return sorted_overlap_list
 
 
 def followed_by_hillary_and_donald(users, twitter):
@@ -255,8 +264,14 @@ def followed_by_hillary_and_donald(users, twitter):
         that is followed by both Hillary Clinton and Donald Trump.
     """
     ###TODO
-    pass
+    common_id = set(users[2]['friends']).intersection(set(users[3]['friends']))
 
+    res = twitter.request('users/lookup', {'user_id':common_id})
+    common_follower = ''
+    for r in res.get_iterator():
+        common_follower = r['screen_name']
+
+    return common_follower
 
 def create_graph(users, friend_counts):
     """ Create a networkx undirected Graph, adding each candidate and friend
@@ -274,7 +289,21 @@ def create_graph(users, friend_counts):
       A networkx Graph
     """
     ###TODO
-    pass
+    G=nx.Graph()
+    for user in users:
+        G.add_node(user['screen_name'])
+    
+    for k, v in friend_counts.items():
+        if v > 1:
+            G.add_node(k)
+    
+    for user in users:
+        for k,v in friend_counts.items():
+            if v > 1 and k in user['friends']:
+                G.add_edge(user['screen_name'], k)
+    
+    return G
+
 
 
 def draw_network(graph, users, filename):
@@ -288,8 +317,14 @@ def draw_network(graph, users, filename):
     make it look presentable.
     """
     ###TODO
-    pass
+    candidate_labels = ({})
+    for user in users:
+        candidate_labels.update({user['screen_name']:user['screen_name']})
 
+    plt.figure(figsize=(12,12))
+    nx.draw_networkx(graph, labels=candidate_labels, with_labels=True, alpha=.5, width=.2, node_size=200)    
+    plt.savefig(filename)
+    plt.show()
 
 def main():
     """ Main method. You should not modify this. """
