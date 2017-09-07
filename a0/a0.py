@@ -119,10 +119,9 @@ def get_users(twitter, screen_names):
     """
     ###TODO
     users = []
-    for name in screen_names:
-        user_details = twitter.request('users/lookup', {'screen_name':name})
-        for details in user_details.get_iterator():
-            users.append(details)
+    resource='users/lookup'
+    params={'screen_name':screen_names}
+    users = robust_request(twitter, resource, params, max_tries=5)
     return users
 
 def get_friends(twitter, screen_name):
@@ -147,11 +146,10 @@ def get_friends(twitter, screen_name):
     [695023, 1697081, 8381682, 10204352, 11669522]
     """
     ###TODO
-    response = twitter.request('friends/ids', {'screen_name': screen_name, 'count': 5000})    
-
-    user_friends = []
-    for res in response.get_iterator():
-        user_friends.append(res)
+    resource='friends/ids'
+    params={'screen_name':screen_name ,'count':5000}
+    robust_response = robust_request(twitter, resource, params, max_tries=5)
+    user_friends= [res for res in robust_response]
 
     return user_friends
 
@@ -207,9 +205,8 @@ def count_friends(users):
     friends_list = []
     for user in users:
         friends_list.extend(user['friends'])
-    print(len(friends_list))
     count = Counter(friends_list)
-    
+
     return count
 
 def friend_overlap(users):
@@ -264,14 +261,20 @@ def followed_by_hillary_and_donald(users, twitter):
         that is followed by both Hillary Clinton and Donald Trump.
     """
     ###TODO
-    common_id = set(users[2]['friends']).intersection(set(users[3]['friends']))
+    hillary_friends = []
+    donald_friends = []
+    for user in users:
+        if user['screen_name'] == 'HillaryClinton':
+            hillary_friends = user['friends']
+        elif user['screen_name'] == 'realDonaldTrump':
+            donald_friends = user['friends']
 
+    common_id = set(hillary_friends).intersection(set(donald_friends))
+    
     res = twitter.request('users/lookup', {'user_id':common_id})
-    common_follower = ''
-    for r in res.get_iterator():
-        common_follower = r['screen_name']
+    res_json = res.json()
 
-    return common_follower
+    return res_json[0]['screen_name']
 
 def create_graph(users, friend_counts):
     """ Create a networkx undirected Graph, adding each candidate and friend
@@ -304,8 +307,6 @@ def create_graph(users, friend_counts):
     
     return G
 
-
-
 def draw_network(graph, users, filename):
     """
     Draw the network to a file. Only label the candidate nodes; the friend
@@ -320,7 +321,7 @@ def draw_network(graph, users, filename):
     candidate_labels = ({})
     for user in users:
         candidate_labels.update({user['screen_name']:user['screen_name']})
-
+    
     plt.figure(figsize=(12,12))
     nx.draw_networkx(graph, labels=candidate_labels, with_labels=True, alpha=.5, width=.2, node_size=200)    
     plt.savefig(filename)

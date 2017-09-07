@@ -9,11 +9,13 @@ Trump.
 
 How is this approach misleading? How might you fix it?
 
-
-
-
-
-
+Answer:-
+This approach is misleading because if you check the friends count for Jill Stein 
+and Gary Johnson are 1648 and 3481 respectively, whereas the friends count for 
+Hillary Clinton and Donald Trump are 748 and 42 people respectively. 
+To fix this, we can analyse and conclude that, as Jill Stein and Gary Johnson have 
+more friends count, their overlap count for friends will be more. This does not 
+conclude that they are more similar than Hillary Clinton and Donald Trump.
 
 
 
