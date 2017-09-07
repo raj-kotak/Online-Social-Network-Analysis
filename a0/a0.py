@@ -151,7 +151,7 @@ def get_friends(twitter, screen_name):
     robust_response = robust_request(twitter, resource, params, max_tries=5)
     user_friends= [res for res in robust_response]
 
-    return user_friends
+    return sorted(user_friends)
 
 def add_all_friends(twitter, users):
     """ Get the list of accounts each user follows.
@@ -173,8 +173,8 @@ def add_all_friends(twitter, users):
     """
     ###TODO
     for user in users:
-        friends = sorted(get_friends(twitter, user['screen_name']))
-        user['friends'] = friends
+        friends = get_friends(twitter, user['screen_name'])
+        user.update({'friends':friends})
 
 def print_num_friends(users):
     """Print the number of friends per candidate, sorted by candidate name.
