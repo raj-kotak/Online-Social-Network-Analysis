@@ -230,6 +230,9 @@ def get_subgraph(graph, min_degree):
     2
     """
     ###TODO
+    del_nodes = [node for node in graph if graph.degree(node) < min_degree]
+    graph.remove_nodes_from(del_nodes)
+    return graph
     pass
 
 
