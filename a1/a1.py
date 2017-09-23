@@ -75,6 +75,42 @@ def bfs(graph, root, max_depth):
     [('B', ['D']), ('D', ['E']), ('F', ['E']), ('G', ['D', 'F'])]
     """
     ###TODO
+    q = deque()
+    q.append(root)
+    seen = set()
+
+    node2distances = {}
+    node2num_paths = {}
+    node2parents = defaultdict(list)
+
+    while len(q) > 0:
+        current_node = q.popleft()
+        if root == current_node:
+          seen.add(current_node)
+          node2distances[current_node] = 0
+          node2num_paths[current_node] = 1
+
+        for nn in graph.neighbors(current_node):
+          weight = node2distances.get(current_node) + 1
+
+          if weight <= max_depth:
+            if nn not in seen:
+              seen.add(nn)
+              q.append(nn)
+              node2distances[nn] = weight
+              node2num_paths[nn] = 1
+              node2parents[nn] = [current_node]
+            else:
+              if node2distances.get(nn) >= weight:
+                node2distances[nn] = weight
+
+                if node2distances.get(nn) == weight:
+                  node2num_paths[nn] = node2num_paths.get(nn) + 1
+                  node2parents[nn].append(current_node)
+                else:
+                  node2parents[nn] = [current_node] 
+                
+    return (node2distances, node2num_paths, node2parents)
     pass
 
 
@@ -130,6 +166,54 @@ def bottom_up(root, node2distances, node2num_paths, node2parents):
     [(('A', 'B'), 1.0), (('B', 'C'), 1.0), (('B', 'D'), 3.0), (('D', 'E'), 4.5), (('D', 'G'), 0.5), (('E', 'F'), 1.5), (('F', 'G'), 0.5)]
     """
     ###TODO
+    queue = deque()
+    seen = set()
+    edges_credit = {}
+    node_credit = {}
+    total_parent_weight = 0
+
+    max_distance = max(node2distances.values())
+    [queue.append(k) for k, v in node2distances.items() if v == max_distance]
+    current_level = max_distance
+
+    for node in node2distances:            
+        if node != root:
+            node_credit[node] = 1
+
+    while len(queue) > 0:
+      total_parent_weight = 0
+      
+      if current_level != node2distances.get(queue[0]):
+        current_level = current_level - 1
+        for k, v in node2distances.items():
+              if current_level == v and k not in seen:
+                queue.append(k)
+      else:
+        current_node = queue.popleft()
+
+        if current_node == root:
+          break
+          
+        for parent in node2parents[current_node]: 
+          total_parent_weight = total_parent_weight + node2num_paths[parent]
+
+        for parent in node2parents[current_node]:
+          if parent not in seen:
+            seen.add(parent)
+            queue.append(parent)
+
+          if current_node > parent:
+            edges_credit[(parent, current_node)] = (node_credit[current_node] * (node2num_paths[parent]/total_parent_weight))
+          else:
+            edges_credit[(current_node, parent)] = (node_credit[current_node] * (node2num_paths[parent]/total_parent_weight))
+
+          if parent != root:
+              if(current_node > parent):
+                  node_credit[parent] = node_credit[parent] + edges_credit[(parent, current_node)]
+              else:
+                  node_credit[parent] = node_credit[parent] + edges_credit[(current_node, parent)]
+    print(edges_credit)
+    return edges_credit
     pass
 
 
@@ -155,6 +239,25 @@ def approximate_betweenness(graph, max_depth):
     [(('A', 'B'), 2.0), (('A', 'C'), 1.0), (('B', 'C'), 2.0), (('B', 'D'), 6.0), (('D', 'E'), 2.5), (('D', 'F'), 2.0), (('D', 'G'), 2.5), (('E', 'F'), 1.5), (('F', 'G'), 1.5)]
     """
     ###TODO
+    betweenness_dict = {}
+    graph = example_graph()
+    for n in graph.nodes():
+      node2distances, node2num_paths, node2parents = bfs(graph, n, max_depth)
+      bottom_up_dict = bottom_up(n, node2distances, node2num_paths, node2parents)
+      print(bottom_up_dict.items())
+      # for k, v in bottom_up_dict.items():
+      #   if k not in betweenness_dict.keys():
+      #     betweenness_dict[k] = v
+      #   else:
+      #     betweenness_dict[k] = v + betweenness_dict.get(k)
+      
+    
+    # print("max depth", max_depth, "\n", "betweenness\n", betweenness_dict)
+
+      # for k, v in betweenness_dict.items():
+      #   betweenness_dict.update({k:float(v/2.0)})
+
+      return betweenness_dict
     pass
 
 
@@ -210,6 +313,9 @@ def partition_girvan_newman(graph, max_depth):
     ['D', 'E', 'F', 'G']
     """
     ###TODO
+    # new_graph = graph.copy()
+    betweenness_list = approximate_betweenness(graph, max_depth)
+    
     pass
 
 def get_subgraph(graph, min_degree):
@@ -232,6 +338,7 @@ def get_subgraph(graph, min_degree):
     ###TODO
     del_nodes = [node for node in graph if graph.degree(node) < min_degree]
     graph.remove_nodes_from(del_nodes)
+
     return graph
     pass
 
@@ -309,6 +416,12 @@ def score_max_depths(graph, max_depths):
       partition_girvan_newman. See Log.txt for an example.
     """
     ###TODO
+    depth_norm_cut_list = []
+    for depth in max_depths:
+      component = partition_girvan_newman(graph, depth)
+      depth_norm_cut_list.append((depth, component))
+    
+    return depth_norm_cut_list
     pass
 
 
