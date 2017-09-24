@@ -127,6 +127,7 @@ def complexity_of_bfs(V, E, K):
     True
     """
     ###TODO
+    return V + E
     pass
 
 
@@ -174,6 +175,7 @@ def bottom_up(root, node2distances, node2num_paths, node2parents):
 
     max_distance = max(node2distances.values())
     [queue.append(k) for k, v in node2distances.items() if v == max_distance]
+
     current_level = max_distance
 
     for node in node2distances:            
@@ -212,7 +214,7 @@ def bottom_up(root, node2distances, node2num_paths, node2parents):
                   node_credit[parent] = node_credit[parent] + edges_credit[(parent, current_node)]
               else:
                   node_credit[parent] = node_credit[parent] + edges_credit[(current_node, parent)]
-    print(edges_credit)
+
     return edges_credit
     pass
 
@@ -240,24 +242,21 @@ def approximate_betweenness(graph, max_depth):
     """
     ###TODO
     betweenness_dict = {}
-    graph = example_graph()
+    
     for n in graph.nodes():
       node2distances, node2num_paths, node2parents = bfs(graph, n, max_depth)
       bottom_up_dict = bottom_up(n, node2distances, node2num_paths, node2parents)
-      print(bottom_up_dict.items())
-      # for k, v in bottom_up_dict.items():
-      #   if k not in betweenness_dict.keys():
-      #     betweenness_dict[k] = v
-      #   else:
-      #     betweenness_dict[k] = v + betweenness_dict.get(k)
       
-    
-    # print("max depth", max_depth, "\n", "betweenness\n", betweenness_dict)
+      for k, v in bottom_up_dict.items():
+        if k not in betweenness_dict.keys():
+          betweenness_dict[k] = v
+        else:
+          betweenness_dict[k] = v + betweenness_dict.get(k)
 
-      # for k, v in betweenness_dict.items():
-      #   betweenness_dict.update({k:float(v/2.0)})
+    for k, v in betweenness_dict.items():
+      betweenness_dict.update({k:float(v/2.0)})
 
-      return betweenness_dict
+    return betweenness_dict
     pass
 
 
@@ -313,9 +312,25 @@ def partition_girvan_newman(graph, max_depth):
     ['D', 'E', 'F', 'G']
     """
     ###TODO
-    # new_graph = graph.copy()
-    betweenness_list = approximate_betweenness(graph, max_depth)
+    new_graph = graph.copy()
+
+    betweenness_list = approximate_betweenness(new_graph, max_depth)
+    sorted_betweenness_list = sorted(betweenness_list.items(), key=lambda x: (-x[1],x[0]))
+
+    components = [c for c in nx.connected_component_subgraphs(new_graph)]
+
+    i = 0
+    while len(components) == 1:
+      edge_to_remove = sorted_betweenness_list[i][0]
+
+      if new_graph.has_edge(*edge_to_remove):
+        new_graph.remove_edge(*edge_to_remove)
+        components = [c for c in nx.connected_component_subgraphs(new_graph)]
+        i = i + 1
+
+    result = [c for c in components]
     
+    return result
     pass
 
 def get_subgraph(graph, min_degree):
@@ -361,8 +376,8 @@ def volume(nodes, graph):
     4
     """
     ###TODO
+    return len(graph.edges(nodes))
     pass
-
 
 def cut(S, T, graph):
     """
@@ -380,6 +395,13 @@ def cut(S, T, graph):
     1
     """
     ###TODO
+    cut_set_value = 0
+    for x in T:
+      for y in S:
+        if graph.has_edge(x, y):
+          cut_set_value = cut_set_value + 1
+
+    return cut_set_value
     pass
 
 
@@ -395,6 +417,14 @@ def norm_cut(S, T, graph):
 
     """
     ###TODO
+    cut_set_value = cut(S, T, graph)
+    print("cut value", cut_set_value)
+    volume_S = volume(S.nodes(), graph)
+    volume_T = volume(T.nodes(), graph)
+
+    norm_cut_value = (cut_set_value/volume_S) + (cut_set_value/volume_T)
+
+    return norm_cut_value
     pass
 
 
@@ -416,12 +446,15 @@ def score_max_depths(graph, max_depths):
       partition_girvan_newman. See Log.txt for an example.
     """
     ###TODO
-    depth_norm_cut_list = []
+    # new_graph = example_graph()
+    scores_list = []
     for depth in max_depths:
       component = partition_girvan_newman(graph, depth)
-      depth_norm_cut_list.append((depth, component))
-    
-    return depth_norm_cut_list
+      norm_cut_value = norm_cut(component[0], component[1], graph)
+      print("norm cut value", norm_cut_value)
+      scores_list.append((depth, norm_cut_value))
+
+    return scores_list
     pass
 
 
