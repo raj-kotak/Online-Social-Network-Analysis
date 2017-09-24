@@ -278,6 +278,7 @@ def is_approximation_always_right():
     <class 'str'>
     """
     ###TODO
+    return "no"
     pass
 
 
@@ -321,10 +322,11 @@ def partition_girvan_newman(graph, max_depth):
 
     i = 0
     while len(components) == 1:
-      edge_to_remove = sorted_betweenness_list[i][0]
+      # edge_to_remove = sorted_betweenness_list[i][0]
 
-      if new_graph.has_edge(*edge_to_remove):
-        new_graph.remove_edge(*edge_to_remove)
+      if new_graph.has_edge(*(sorted_betweenness_list[i][0][1],sorted_betweenness_list[i][0][0])):
+        # new_graph.remove_edge(*edge_to_remove)
+        new_graph.remove_edge(*(sorted_betweenness_list[i][0][1],sorted_betweenness_list[i][0][0]))
         components = [c for c in nx.connected_component_subgraphs(new_graph)]
         i = i + 1
 
@@ -351,10 +353,11 @@ def get_subgraph(graph, min_degree):
     2
     """
     ###TODO
-    del_nodes = [node for node in graph if graph.degree(node) < min_degree]
-    graph.remove_nodes_from(del_nodes)
+    sub_g = graph.copy()
+    del_nodes = [node for node in sub_g if sub_g.degree(node) < min_degree]
+    sub_g.remove_nodes_from(del_nodes)
 
-    return graph
+    return sub_g
     pass
 
 
@@ -398,7 +401,7 @@ def cut(S, T, graph):
     cut_set_value = 0
     for x in T:
       for y in S:
-        if graph.has_edge(x, y):
+        if graph.has_edge(x, y) and graph.has_edge(y, x):
           cut_set_value = cut_set_value + 1
 
     return cut_set_value
@@ -417,12 +420,11 @@ def norm_cut(S, T, graph):
 
     """
     ###TODO
-    cut_set_value = cut(S, T, graph)
-    print("cut value", cut_set_value)
-    volume_S = volume(S.nodes(), graph)
-    volume_T = volume(T.nodes(), graph)
+    cut_set_value = float(cut(S, T, graph))
+    volume_S = volume(S, graph)
+    volume_T = volume(T, graph)
 
-    norm_cut_value = (cut_set_value/volume_S) + (cut_set_value/volume_T)
+    norm_cut_value = float(cut_set_value/volume_S) + float(cut_set_value/volume_T)
 
     return norm_cut_value
     pass
@@ -450,8 +452,7 @@ def score_max_depths(graph, max_depths):
     scores_list = []
     for depth in max_depths:
       component = partition_girvan_newman(graph, depth)
-      norm_cut_value = norm_cut(component[0], component[1], graph)
-      print("norm cut value", norm_cut_value)
+      norm_cut_value = norm_cut(component[0].nodes(), component[1].nodes(), graph)
       scores_list.append((depth, norm_cut_value))
 
     return scores_list
@@ -493,6 +494,19 @@ def make_training_graph(graph, test_node, n):
     ['F', 'G']
     """
     ###TODO
+    new_graph = graph.copy()
+    # new_graph = example_graph()
+    test_node_neighbors = sorted(new_graph.neighbors(test_node))
+
+    counter = n
+    for nn in test_node_neighbors:
+      if counter > 0:
+        new_graph.remove_edge(*(test_node, nn))
+        counter = counter - 1
+      else:
+        break
+
+    return new_graph
     pass
 
 
@@ -524,6 +538,21 @@ def jaccard(graph, node, k):
     [(('D', 'E'), 0.5), (('D', 'A'), 0.0)]
     """
     ###TODO
+    jaccard_scores = []
+
+    neighbors = set(graph.neighbors(node))
+    for n in sorted(graph.nodes()):
+      if (not graph.has_edge(node, n)) and (n != node):
+        neighbors2 = set(graph.neighbors(n))
+        jaccard_scores.append((n, len(neighbors & neighbors2) / len(neighbors | neighbors2)))
+
+    sorted_jaccard_scores = sorted(jaccard_scores, key=lambda x: x[1], reverse=True)
+
+    jaccard_list = []
+    for score in sorted_jaccard_scores[:k]:
+      jaccard_list.append(((node, score[0]), score[1]))
+
+    return jaccard_list
     pass
 
 
