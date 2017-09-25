@@ -601,6 +601,25 @@ def path_score(graph, root, k, beta):
     [(('D', 'F'), 0.5), (('D', 'A'), 0.25), (('D', 'C'), 0.25)]
     """
     ###TODO
+
+    node2distances, node2num_paths, node2parents = bfs(graph, root, math.inf)
+    neighbors_list = graph.neighbors(root)
+
+    path_scores = []
+    for node in sorted(graph.nodes()):
+      if (node not in neighbors_list) and (node != root):
+        i = node2distances[node]
+        n = node2num_paths[node]
+        score = float((beta**i) * n)
+        path_scores.append((node, score))
+
+    sorted_path_scores = sorted(path_scores, key=lambda x: x[1], reverse=True)
+
+    path_list = []
+    for score in sorted_path_scores[:k]:
+      path_list.append(((root, score[0]), score[1]))
+
+    return path_list[:k]
     pass
 
 
@@ -623,6 +642,14 @@ def evaluate(predicted_edges, graph):
     0.5
     """
     ###TODO
+    counter = 0
+    for edge in predicted_edges:
+      if graph.has_edge(*edge):
+        counter = counter + 1
+    
+    accuracy = float(counter/len(predicted_edges))
+    
+    return accuracy 
     pass
 
 
