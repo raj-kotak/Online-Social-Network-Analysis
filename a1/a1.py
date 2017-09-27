@@ -75,40 +75,40 @@ def bfs(graph, root, max_depth):
     [('B', ['D']), ('D', ['E']), ('F', ['E']), ('G', ['D', 'F'])]
     """
     ###TODO
-    q = deque()
-    q.append(root)
+    queue = deque()
+    queue.append(root)
     seen = set()
 
     node2distances = {}
     node2num_paths = {}
     node2parents = defaultdict(list)
 
-    while len(q) > 0:
-        current_node = q.popleft()
-        if root == current_node:
-          seen.add(current_node)
-          node2distances[current_node] = 0
-          node2num_paths[current_node] = 1
+    while len(queue) > 0:
+      current_node = queue.popleft()
+      if root == current_node:
+        seen.add(current_node)
+        node2distances[current_node] = 0
+        node2num_paths[current_node] = 1
 
-        for nn in graph.neighbors(current_node):
-          weight = node2distances.get(current_node) + 1
+      for nn in graph.neighbors(current_node):
+        weight = node2distances.get(current_node) + 1
 
-          if weight <= max_depth:
-            if nn not in seen:
-              seen.add(nn)
-              q.append(nn)
+        if weight <= max_depth:
+          if nn not in seen:
+            seen.add(nn)
+            queue.append(nn)
+            node2distances[nn] = weight
+            node2num_paths[nn] = 1
+            node2parents[nn] = [current_node]
+          else:
+            if node2distances.get(nn) >= weight:
               node2distances[nn] = weight
-              node2num_paths[nn] = 1
-              node2parents[nn] = [current_node]
-            else:
-              if node2distances.get(nn) >= weight:
-                node2distances[nn] = weight
 
-                if node2distances.get(nn) == weight:
-                  node2num_paths[nn] = node2num_paths.get(nn) + 1
-                  node2parents[nn].append(current_node)
-                else:
-                  node2parents[nn] = [current_node] 
+              if node2distances.get(nn) == weight:
+                node2num_paths[nn] = node2num_paths.get(nn) + 1
+                node2parents[nn].append(current_node)
+              else:
+                node2parents[nn] = [current_node] 
                 
     return (node2distances, node2num_paths, node2parents)
     pass
@@ -322,12 +322,10 @@ def partition_girvan_newman(graph, max_depth):
 
     i = 0
     while len(components) == 1:
-      # edge_to_remove = sorted_betweenness_list[i][0]
-
       if new_graph.has_edge(*(sorted_betweenness_list[i][0][1],sorted_betweenness_list[i][0][0])):
-        # new_graph.remove_edge(*edge_to_remove)
         new_graph.remove_edge(*(sorted_betweenness_list[i][0][1],sorted_betweenness_list[i][0][0]))
         components = [c for c in nx.connected_component_subgraphs(new_graph)]
+        components = sorted(components, key=lambda x: sorted(x.nodes()))
         i = i + 1
 
     result = [c for c in components]
@@ -354,8 +352,8 @@ def get_subgraph(graph, min_degree):
     """
     ###TODO
     sub_g = graph.copy()
-    del_nodes = [node for node in sub_g if sub_g.degree(node) < min_degree]
-    sub_g.remove_nodes_from(del_nodes)
+    delete_nodes = [node for node in sub_g if sub_g.degree(node) < min_degree]
+    sub_g.remove_nodes_from(delete_nodes)
 
     return sub_g
     pass
@@ -448,11 +446,11 @@ def score_max_depths(graph, max_depths):
       partition_girvan_newman. See Log.txt for an example.
     """
     ###TODO
-    # new_graph = example_graph()
+    
     scores_list = []
     for depth in max_depths:
-      component = partition_girvan_newman(graph, depth)
-      norm_cut_value = norm_cut(component[0].nodes(), component[1].nodes(), graph)
+      components = partition_girvan_newman(graph, depth)
+      norm_cut_value = norm_cut(components[0].nodes(), components[1].nodes(), graph)
       scores_list.append((depth, norm_cut_value))
 
     return scores_list
@@ -495,7 +493,7 @@ def make_training_graph(graph, test_node, n):
     """
     ###TODO
     new_graph = graph.copy()
-    # new_graph = example_graph()
+    
     test_node_neighbors = sorted(new_graph.neighbors(test_node))
 
     counter = n
@@ -508,7 +506,6 @@ def make_training_graph(graph, test_node, n):
 
     return new_graph
     pass
-
 
 
 def jaccard(graph, node, k):
@@ -541,10 +538,10 @@ def jaccard(graph, node, k):
     jaccard_scores = []
 
     neighbors = set(graph.neighbors(node))
-    for n in sorted(graph.nodes()):
-      if (not graph.has_edge(node, n)) and (n != node):
-        neighbors2 = set(graph.neighbors(n))
-        jaccard_scores.append((n, len(neighbors & neighbors2) / len(neighbors | neighbors2)))
+    for nodes in sorted(graph.nodes()):
+      if (not graph.has_edge(node, nodes)) and (nodes != node):
+        neighbors2 = set(graph.neighbors(nodes))
+        jaccard_scores.append((nodes, len(neighbors & neighbors2) / len(neighbors | neighbors2)))
 
     sorted_jaccard_scores = sorted(jaccard_scores, key=lambda x: x[1], reverse=True)
 
@@ -601,9 +598,8 @@ def path_score(graph, root, k, beta):
     [(('D', 'F'), 0.5), (('D', 'A'), 0.25), (('D', 'C'), 0.25)]
     """
     ###TODO
-
-    node2distances, node2num_paths, node2parents = bfs(graph, root, math.inf)
     neighbors_list = graph.neighbors(root)
+    node2distances, node2num_paths, node2parents = bfs(graph, root, math.inf)
 
     path_scores = []
     for node in sorted(graph.nodes()):
