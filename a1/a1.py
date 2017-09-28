@@ -616,7 +616,7 @@ def path_score(graph, root, k, beta):
       path_list.append(((root, score[0]), score[1]))
 
     return path_list[:k]
-    pass
+    
 
 
 def evaluate(predicted_edges, graph):
