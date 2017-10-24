@@ -94,6 +94,21 @@ def tokenize(doc, keep_internal_punct=False):
           dtype='<U5')
     """
     ###TODO
+    if not doc:
+        return []
+    
+    doc = doc.lower()
+    tokens = []
+    if keep_internal_punct:
+      exclude_strings = string.punctuation
+      doc_split = doc.strip().split()
+      tokens = [d.lstrip(exclude_strings) for d in doc_split]
+      tokens = [d.rstrip(exclude_strings) for d in doc_split]
+    else:
+      tokens = re.sub('\W+', ' ', doc).split()
+
+    return np.array(tokens)
+
     pass
 
 
@@ -116,6 +131,8 @@ def token_features(tokens, feats):
     [('token=hi', 2), ('token=there', 1)]
     """
     ###TODO
+    for token in tokens:
+      feats["token="+token] = list(tokens).count(token)
     pass
 
 
@@ -192,6 +209,11 @@ def featurize(tokens, feature_fns):
     [('neg_words', 0), ('pos_words', 2), ('token=LOVE', 1), ('token=great', 1), ('token=i', 1), ('token=movie', 1), ('token=this', 1)]
     """
     ###TODO
+    feats = defaultdict(lambda: 0)
+    for funct in feature_fns:
+      funct(tokens, feats)
+
+    return sorted(feats.items())
     pass
 
 
@@ -300,6 +322,11 @@ def eval_all_combinations(docs, labels, punct_vals,
       This function will take a bit longer to run (~20s for me).
     """
     ###TODO
+    tokens_list = []
+    for doc in docs:
+      tokens_list = tokenize(doc)
+      feats = featurize(tokens_list, feature_fns)
+
     pass
 
 
