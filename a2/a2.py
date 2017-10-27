@@ -94,20 +94,25 @@ def tokenize(doc, keep_internal_punct=False):
           dtype='<U5')
     """
     ###TODO
-    if not doc:
-        return []
+    # if not doc:
+    #     return []
     
-    doc = doc.lower()
-    tokens = []
-    if keep_internal_punct:
-      exclude_strings = string.punctuation
-      doc_split = doc.strip().split()
-      tokens = [d.lstrip(exclude_strings) for d in doc_split]
-      tokens = [d.rstrip(exclude_strings) for d in doc_split]
-    else:
-      tokens = re.sub('\W+', ' ', doc).split()
+    # doc = doc.lower()
+    # tokens = []
+    # if keep_internal_punct:
+    #   exclude_strings = string.punctuation
+    #   doc_split = doc.strip().split()
+    #   tokens = [d.lstrip(exclude_strings) for d in doc_split]
+    #   tokens = [d.rstrip(exclude_strings) for d in doc_split]
+    # else:
+    #   tokens = re.sub('\W+', ' ', doc).split()
 
-    return np.array(tokens)
+    # return np.array(tokens)
+
+    if(keep_internal_punct):
+      return np.array([re.sub('^\W+', '',re.sub('\W+$', '',x.lower())) for x in doc.split()])
+    else:
+      return np.array(re.sub('\W+', ' ', doc.lower()).split())
 
     pass
 
@@ -132,7 +137,8 @@ def token_features(tokens, feats):
     """
     ###TODO
     for token in tokens:
-      feats["token="+token] = list(tokens).count(token)
+      feats["token="+token] += 1
+
     pass
 
 
@@ -163,6 +169,21 @@ def token_pair_features(tokens, feats, k=3):
     [('token_pair=a__b', 1), ('token_pair=a__c', 1), ('token_pair=b__c', 2), ('token_pair=b__d', 1), ('token_pair=c__d', 1)]
     """
     ###TODO
+    # combinations_list = []
+    l = 0
+    r = k
+    while r <= len(tokens):
+      temp = tokens[l:r]
+
+      for i in range(0, len(temp)):
+        for j in range(i+1, len(temp)):
+          # combinations_list.append("token_pair="+temp[i]+"__"+temp[j])
+          feats["token_pair="+temp[i]+"__"+temp[j]] += 1
+
+         
+      l = l + 1
+      r = r + 1
+
     pass
 
 
@@ -189,6 +210,18 @@ def lexicon_features(tokens, feats):
     [('neg_words', 1), ('pos_words', 2)]
     """
     ###TODO
+    pos_counter = 0
+    neg_counter = 0
+    for token in tokens:
+      if token.lower() in pos_words:
+        pos_counter = pos_counter + 1
+      
+      if token.lower() in neg_words:
+        neg_counter = neg_counter + 1
+
+    feats['pos_words'] = pos_counter
+    feats['neg_words'] = neg_counter 
+
     pass
 
 
@@ -213,7 +246,7 @@ def featurize(tokens, feature_fns):
     for funct in feature_fns:
       funct(tokens, feats)
 
-    return sorted(feats.items())
+    return sorted(feats.items(),key=lambda x:(x[0]))
     pass
 
 
@@ -250,6 +283,47 @@ def vectorize(tokens_list, feature_fns, min_freq, vocab=None):
     [('token=great', 0), ('token=horrible', 1), ('token=isn', 2), ('token=movie', 3), ('token=t', 4), ('token=this', 5)]
     """
     ###TODO
+    row_list = []
+    col_list = []
+    data = []
+    row = 0
+
+    feats_list = []
+    feats = defaultdict(lambda: 0)
+    for tokens in tokens_list:
+      feats = featurize(tokens, feature_fns)
+      feats_list.append(dict(feats))
+  
+    if vocab == None:
+      vocabulary = []
+      visited = defaultdict(lambda: 0)
+      freq = defaultdict(lambda: 0)
+      vocab = defaultdict(lambda: 0)
+      for feat in feats_list:
+        for k, v in feat.items():
+          if feat[k] > 0:
+            freq[k] += 1
+          if (k not in visited) and (freq[k] >= min_freq):
+            vocabulary.append(k)
+            visited[k] = 0
+
+      vocabulary = sorted(vocabulary)
+      count = 0
+      for k in vocabulary:
+        vocab[k] = count
+        count += 1
+
+    
+    for feat in feats_list:
+      for k, v in feat.items():
+        if k in vocab:
+          col_list.append(vocab[k])
+          data.append(v)
+          row_list.append(row)
+      row += 1 
+
+    X = csr_matrix((np.array(data,dtype='int64'), (np.array(row_list,dtype='int64'),np.array(col_list,dtype='int64'))), shape=(row, len(vocab)))
+    return X, vocab
     pass
 
 
@@ -280,6 +354,15 @@ def cross_validation_accuracy(clf, X, labels, k):
       over each fold of cross-validation.
     """
     ###TODO
+    cv = KFold(len(labels), k)
+    accuracies = []
+    for train_idx, test_idx in cv:
+        clf.fit(X[train_idx], labels[train_idx])
+        predicted = clf.predict(X[test_idx])
+        acc = accuracy_score(labels[test_idx], predicted)
+        accuracies.append(acc)
+    avg = np.mean(accuracies)
+    return avg
     pass
 
 
@@ -322,11 +405,25 @@ def eval_all_combinations(docs, labels, punct_vals,
       This function will take a bit longer to run (~20s for me).
     """
     ###TODO
-    tokens_list = []
-    for doc in docs:
-      tokens_list = tokenize(doc)
-      feats = featurize(tokens_list, feature_fns)
+    result = []
 
+    for punct in punct_vals:
+      tokens_list = []
+      for doc in docs:
+        tokens_list.append(tokenize(doc, punct))
+      for min_feq in min_freqs:
+        for f in range(1, len(feature_fns)+1):
+          for features in combinations(feature_fns, f):
+            features_list = list(features)
+            X, vocab = vectorize(tokens_list, features_list, min_feq)
+            result_dict = {}
+            result_dict['punct'] = punct
+            result_dict['features'] = features
+            result_dict['min_freq'] = min_feq
+            result_dict['accuracy'] = cross_validation_accuracy(LogisticRegression(), X, labels, 5)
+            result.append(result_dict)
+
+    return sorted(result, key=lambda x: x['accuracy'], reverse=True)
     pass
 
 
@@ -337,6 +434,12 @@ def plot_sorted_accuracies(results):
     Save to "accuracies.png".
     """
     ###TODO
+    accuracy_list = [dicts['accuracy'] for dicts in results]
+    plt.plot(range(len(accuracy_list)), sorted(accuracy_list), 'bo-')
+    plt.xlabel('settings')
+    plt.ylabel('accuracies')
+    plt.savefig('accuracies.png')
+    # plt.show()
     pass
 
 
@@ -354,6 +457,9 @@ def mean_accuracy_per_setting(results):
       descending order of accuracy.
     """
     ###TODO
+    # mena_accuracy_list = []
+    # for dicts in results:
+    #   for k, v in dicts.items():
     pass
 
 
