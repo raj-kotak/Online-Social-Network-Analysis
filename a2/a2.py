@@ -457,9 +457,27 @@ def mean_accuracy_per_setting(results):
       descending order of accuracy.
     """
     ###TODO
-    # mena_accuracy_list = []
-    # for dicts in results:
-    #   for k, v in dicts.items():
+    accuracy_dict = defaultdict(list)
+    for setting in results:
+      if setting['features']:
+        accuracy_dict['features='+' '.join([func.__name__ for func in list(setting['features'])])].append(setting['accuracy'])
+      if setting['punct'] == True:
+        accuracy_dict['punct=True'].append(setting['accuracy'])
+      elif setting['punct'] == False:
+        accuracy_dict['punct=False'].append(setting['accuracy'])
+      if setting['min_freq'] == 2:
+        accuracy_dict['min_freq=2'].append(setting['accuracy'])
+      elif setting['min_freq'] == 5:
+        accuracy_dict['min_freq=5'].append(setting['accuracy'])
+      elif setting['min_freq'] == 10:
+        accuracy_dict['min_freq=10'].append(setting['accuracy'])
+      
+
+    accuracy_setting_list = []
+    for k, v in accuracy_dict.items():
+      accuracy_setting_list.append((np.mean(v), k))
+
+    return sorted(accuracy_setting_list, key=lambda x: x[0], reverse=True)  
     pass
 
 
@@ -480,7 +498,17 @@ def fit_best_classifier(docs, labels, best_result):
             training data.
       vocab...The dict from feature name to column index.
     """
-    ###TODO
+    ###TODO    
+    tokens_list = []
+    for doc in docs:
+      tokens_list.append(tokenize(doc, best_result['punct']))
+
+    X, vocab = vectorize(tokens_list, best_result['features'], best_result['min_freq'])
+
+    clf = LogisticRegression()
+    clf.fit(X, labels)
+
+    return clf, vocab
     pass
 
 
@@ -502,6 +530,21 @@ def top_coefs(clf, label, n, vocab):
       given class label.
     """
     ###TODO
+    coef = clf.coef_[0]
+    if label == 0:
+      top_coef_ind = np.argsort(coef)[:n]
+    else:
+      top_coef_ind = np.argsort(coef)[::-1][:n]
+
+    top_coef_terms = np.array([k for k,v in sorted(vocab.items(), key=lambda x: x[1])])[top_coef_ind]
+    top_coef = coef[top_coef_ind]
+
+    if label == 0:
+      feature_coef_list = [f for f in zip(top_coef_terms, abs(top_coef))]
+    else:
+      feature_coef_list = [f for f in zip(top_coef_terms, top_coef)]
+
+    return feature_coef_list
     pass
 
 
@@ -530,6 +573,11 @@ def parse_test_data(best_result, vocab):
                     each column is a feature.
     """
     ###TODO
+    test_docs, test_labels = read_data(os.path.join('data', 'test'))
+    test_tokens_list = [tokenize(test_doc, best_result['punct']) for test_doc in test_docs]
+    X_test, vocab_test = vectorize(test_tokens_list, best_result['features'], best_result['min_freq'], vocab)
+
+    return test_docs, test_labels, X_test
     pass
 
 
@@ -557,6 +605,30 @@ def print_top_misclassified(test_docs, test_labels, X_test, clf, n):
       Nothing; see Log.txt for example printed output.
     """
     ###TODO
+    misclassified_list = []
+    predicted_value = clf.predict(X_test)
+    predicted_proba_value = clf.predict_proba(X_test)
+
+    for predVal in range(len(predicted_value)):
+        misclassified_dict = {}
+        if predicted_value[predVal] != test_labels[predVal]:
+            if predicted_value[predVal] == 0:
+                misclassified_dict['truth'] = test_labels[predVal]
+                misclassified_dict['predicted'] = predicted_value[predVal]
+                misclassified_dict['proba'] = predicted_proba_value[predVal][0]
+                misclassified_dict['test'] = test_docs[predVal] 
+            else:
+                misclassified_dict['truth'] = test_labels[predVal]
+                misclassified_dict['predicted'] = predicted_value[predVal]
+                misclassified_dict['proba'] = predicted_proba_value[predVal][1]
+                misclassified_dict['test'] = test_docs[predVal] 
+            misclassified_list.append(misclassified_dict)
+
+    misclassified_list = sorted(misclassified_list, key=lambda x: x['proba'], reverse=True)[:n]
+
+    for l in misclassified_list:
+        print('truth=%d predicted=%d proba=%.6f'%(l['truth'],l['predicted'],l['proba']))
+        print(l['test']+"\n")
     pass
 
 
