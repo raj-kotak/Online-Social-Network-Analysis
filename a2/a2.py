@@ -94,26 +94,13 @@ def tokenize(doc, keep_internal_punct=False):
           dtype='<U5')
     """
     ###TODO
-    # if not doc:
-    #     return []
-    
-    # doc = doc.lower()
-    # tokens = []
-    # if keep_internal_punct:
-    #   exclude_strings = string.punctuation
-    #   doc_split = doc.strip().split()
-    #   tokens = [d.lstrip(exclude_strings) for d in doc_split]
-    #   tokens = [d.rstrip(exclude_strings) for d in doc_split]
-    # else:
-    #   tokens = re.sub('\W+', ' ', doc).split()
-
-    # return np.array(tokens)
-
-    if(keep_internal_punct):
-      return np.array([re.sub('^\W+', '',re.sub('\W+$', '',x.lower())) for x in doc.split()])
+    tokens_list = []
+    if keep_internal_punct:
+      tokens_list = np.array([re.sub('^\W+', '', re.sub('\W+$', '', x.lower())) for x in doc.split()])
     else:
-      return np.array(re.sub('\W+', ' ', doc.lower()).split())
+      tokens_list = np.array(re.sub('\W+', ' ', doc.lower()).split())
 
+    return tokens_list
     pass
 
 
@@ -169,7 +156,6 @@ def token_pair_features(tokens, feats, k=3):
     [('token_pair=a__b', 1), ('token_pair=a__c', 1), ('token_pair=b__c', 2), ('token_pair=b__d', 1), ('token_pair=c__d', 1)]
     """
     ###TODO
-    # combinations_list = []
     l = 0
     r = k
     while r <= len(tokens):
@@ -177,7 +163,6 @@ def token_pair_features(tokens, feats, k=3):
 
       for i in range(0, len(temp)):
         for j in range(i+1, len(temp)):
-          # combinations_list.append("token_pair="+temp[i]+"__"+temp[j])
           feats["token_pair="+temp[i]+"__"+temp[j]] += 1
 
          
@@ -246,7 +231,7 @@ def featurize(tokens, feature_fns):
     for funct in feature_fns:
       funct(tokens, feats)
 
-    return sorted(feats.items(),key=lambda x:(x[0]))
+    return sorted(feats.items(), key=lambda x:(x[0]))
     pass
 
 
@@ -301,7 +286,7 @@ def vectorize(tokens_list, feature_fns, min_freq, vocab=None):
       vocab = defaultdict(lambda: 0)
       for feat in feats_list:
         for k, v in feat.items():
-          if feat[k] > 0:
+          if v > 0:
             freq[k] += 1
           if (k not in visited) and (freq[k] >= min_freq):
             vocabulary.append(k)
@@ -406,14 +391,17 @@ def eval_all_combinations(docs, labels, punct_vals,
     """
     ###TODO
     result = []
+    featureslist = []
+    for f in range(1, len(feature_fns)+1):
+          for features in combinations(feature_fns, f):
+            featureslist.append(features)
 
     for punct in punct_vals:
       tokens_list = []
       for doc in docs:
         tokens_list.append(tokenize(doc, punct))
       for min_feq in min_freqs:
-        for f in range(1, len(feature_fns)+1):
-          for features in combinations(feature_fns, f):
+        for features in featureslist:
             features_list = list(features)
             X, vocab = vectorize(tokens_list, features_list, min_feq)
             result_dict = {}
@@ -439,7 +427,6 @@ def plot_sorted_accuracies(results):
     plt.xlabel('settings')
     plt.ylabel('accuracies')
     plt.savefig('accuracies.png')
-    # plt.show()
     pass
 
 
@@ -498,10 +485,8 @@ def fit_best_classifier(docs, labels, best_result):
             training data.
       vocab...The dict from feature name to column index.
     """
-    ###TODO    
-    tokens_list = []
-    for doc in docs:
-      tokens_list.append(tokenize(doc, best_result['punct']))
+    ###TODO
+    tokens_list = [tokenize(doc, best_result['punct']) for doc in docs]
 
     X, vocab = vectorize(tokens_list, best_result['features'], best_result['min_freq'])
 
