@@ -1,0 +1,52 @@
+Grade: 45.00/50.00
+
+1 Deduction(s):
+
+--------------
+#1: 5.00 points
+Failing test: test_bfs_3: 
+        @points=5
+
+        
+Traceback (most recent call last):
+  File "../assignments-sol/a1/a1_test.py", line 102, in test_bfs_3
+    [('A', 1), ('B', 1), ('C', 1), ('D', 1), ('E', 3), ('F', 3), ('G', 2)])
+AssertionError: Lists differ: [('A', 1), ('B', 1), ('C', 1), ('D', 1), ('E', 2), ('F', 1), ('G', 2)] != [('A', 1), ('B', 1), ('C', 1), ('D', 1), ('E', 3), ('F', 3), ('G', 2)]
+
+First differing element 4:
+('E', 2)
+('E', 3)
+
+- [('A', 1), ('B', 1), ('C', 1), ('D', 1), ('E', 2), ('F', 1), ('G', 2)]
+?                                                ^         ^
+
++ [('A', 1), ('B', 1), ('C', 1), ('D', 1), ('E', 3), ('F', 3), ('G', 2)]
+?                                                ^         ^
+
+
+source:
+    def test_bfs_3(self):
+         """
+         @points=5
+ 
+         """
+         graph = example_graph2()
+         node2distances, node2num_paths, node2parents = bfs(graph, 'A', max_depth=10)
+         self.assertListEqual(sorted(node2distances.items()),
+                              [('A', 0), ('B', 2), ('C', 1), ('D', 1), ('E', 3), ('F', 4), ('G', 2)])
+         self.assertListEqual(sorted(node2num_paths.items()),
+                              [('A', 1), ('B', 1), ('C', 1), ('D', 1), ('E', 3), ('F', 3), ('G', 2)])
+         res = sorted((node, sorted(parents)) for node, parents in node2parents.items())
+         self.assertListEqual(res,
+                              [('B', ['D']), ('C', ['A']), ('D', ['A']), ('E', ['B', 'G']), ('F', ['E']), ('G', ['C', 'D'])])
+         b = bottom_up(graph, node2distances, node2num_paths, node2parents)
+         self.assertEqual(1.0, round(b[('E', 'F')], 2))
+         self.assertEqual(3.83, round(b[('A', 'D')], 2))
+         self.assertEqual(1.67, round(b[('B', 'D')], 2))
+         self.assertEqual(1.17, round(b[('D', 'G')], 2))
+         self.assertEqual(2.17, round(b[('A', 'C')], 2))
+         self.assertEqual(0.67, round(b[('B', 'E')], 2))
+         self.assertEqual(1.33, round(b[('E', 'G')], 2))
+         self.assertEqual(1.17, round(b[('C', 'G')], 2))
+--------------
+
