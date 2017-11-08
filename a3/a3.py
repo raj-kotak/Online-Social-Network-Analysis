@@ -55,6 +55,8 @@ def tokenize(movies):
     [['horror', 'romance'], ['sci-fi']]
     """
     ###TODO
+    movies['tokens'] = [tokenize_string(genre) for genre in movies.genres]
+    return movies
     pass
 
 
@@ -64,6 +66,7 @@ def featurize(movies):
     Each row will contain a csr_matrix of shape (1, num_features). Each
     entry in this matrix will contain the tf-idf value of the term, as
     defined in class:
+
     tfidf(i, d) := tf(i, d) / max_k tf(k, d) * log10(N/df(i))
     where:
     i is a term
@@ -81,8 +84,48 @@ def featurize(movies):
       - The vocab, a dict from term to int. Make sure the vocab is sorted alphabetically as in a2 (e.g., {'aardvark': 0, 'boy': 1, ...})
     """
     ###TODO
-    pass
+    genre_list = []
+    vocab = defaultdict(lambda: 0)
 
+    for genres in movies['tokens']:
+        for genre in genres:
+            genre_list.append(genre)
+
+    genre_dict = dict(Counter(genre_list))
+    genre_list = sorted(genre_dict.keys())
+
+    vocab_counter = 0
+    for genre in genre_list:
+        vocab[genre] = vocab_counter
+        vocab_counter += 1
+    
+    for genres in movies['tokens']:
+        col_list = []
+        row_list = []
+        tfidf_list = []
+        col = 0
+        num_features = 0
+        visited = defaultdict(lambda: 0)
+        for genre in genres:
+            num_features += 1
+            if genre not in visited:
+                tfidf = (genres.count(genre) / 1 * math.log10((len(movies.movieId)) / genre_dict[genre]))
+                if tfidf > 0:
+                    visited[genre] = tfidf
+                    row_list.append(0)
+                    col_list.append(col)
+                    col += 1
+                    tfidf_list.append(tfidf)
+            else:
+                row_list.append(0)
+                col_list.append(col)
+                col += 1
+                tfidf_list.append(0)
+
+        movies['features'] = csr_matrix((tfidf_list, (row_list, col_list)))
+
+    return movies, vocab
+    pass
 
 def train_test_split(ratings):
     """DONE.
@@ -105,9 +148,9 @@ def cosine_sim(a, b):
       The cosine similarity, defined as: dot(a, b) / ||a|| * ||b||
       where ||a|| indicates the Euclidean norm (aka L2 norm) of vector a.
     """
-    ###TODO
+    ###TODO    
+    return a.dot(b.transpose())[0,0] / ((math.sqrt(sum(a.data**2))) * (math.sqrt(sum(a.data**2))))
     pass
-
 
 def make_predictions(movies, ratings_train, ratings_test):
     """
@@ -132,6 +175,26 @@ def make_predictions(movies, ratings_train, ratings_test):
       A numpy array containing one predicted rating for each element of ratings_test.
     """
     ###TODO
+    # print(movies.features)
+    prediction_list = []
+    for test_index, test_row in ratings_test.iterrows():
+        cosine_sum = 0.0
+        weighted_sum = 0.0
+        train_user_ratings = ratings_train[ratings_train['userId'] == test_row['userId']]
+        movies_test_features = movies[movies['movieId'] == test_row['movieId']].iloc[0]['features']
+
+        for train_index, train_row in train_user_ratings.iterrows():
+            movies_train_features = movies[movies['movieId'] == train_row['movieId']].iloc[0]['features']
+            cosine_val = cosine_sim(movies_test_features, movies_train_features)
+            cosine_sum += cosine_val
+            weighted_sum += cosine_val * train_row['rating']
+
+        if cosine_sum != 0 and weighted_sum != 0:
+            prediction_list.append(weighted_sum/cosine_sum)
+        else:
+            prediction_list.append(np.mean(train_user_ratings['rating']))
+    
+    return np.array(prediction_list)
     pass
 
 
@@ -143,7 +206,7 @@ def mean_absolute_error(predictions, ratings_test):
 
 
 def main():
-    download_data()
+    # download_data()
     path = 'ml-latest-small'
     ratings = pd.read_csv(path + os.path.sep + 'ratings.csv')
     movies = pd.read_csv(path + os.path.sep + 'movies.csv')
