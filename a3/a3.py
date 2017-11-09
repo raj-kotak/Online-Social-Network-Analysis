@@ -84,9 +84,6 @@ def featurize(movies):
       - The vocab, a dict from term to int. Make sure the vocab is sorted alphabetically as in a2 (e.g., {'aardvark': 0, 'boy': 1, ...})
     """
     ###TODO
-    genre_list = []
-    vocab = defaultdict(lambda: 0)
-
     for genres in movies['tokens']:
         for genre in genres:
             genre_list.append(genre)
@@ -94,36 +91,34 @@ def featurize(movies):
     genre_dict = dict(Counter(genre_list))
     genre_list = sorted(genre_dict.keys())
 
+    tokens_freq = defaultdict(lambda: 0)
+    for index, row in movies.iterrows():
+        tokens_freq[row.movieId] = dict(Counter(row.tokens))
+
+    max_k = defaultdict(lambda: 0)
+    for index, row in tokens_freq.items():
+        max_k[index] = max(row.values())
+
+    vocab = defaultdict(lambda: 0)
     vocab_counter = 0
     for genre in genre_list:
         vocab[genre] = vocab_counter
         vocab_counter += 1
     
-    for genres in movies['tokens']:
+    X_list = []
+    for index, row in movies.iterrows():
         col_list = []
         row_list = []
         tfidf_list = []
-        col = 0
-        num_features = 0
-        visited = defaultdict(lambda: 0)
-        for genre in genres:
-            num_features += 1
-            if genre not in visited:
-                tfidf = (genres.count(genre) / 1 * math.log10((len(movies.movieId)) / genre_dict[genre]))
-                if tfidf > 0:
-                    visited[genre] = tfidf
-                    row_list.append(0)
-                    col_list.append(col)
-                    col += 1
-                    tfidf_list.append(tfidf)
-            else:
+        for genre in row.tokens:
+            tfidf = (row.tokens.count(genre) / max_k[row.movieId] * math.log10((len(movies.movieId)) / genre_dict[genre]))
+            if tfidf > 0:
                 row_list.append(0)
-                col_list.append(col)
-                col += 1
-                tfidf_list.append(0)
+                col_list.append(vocab[genre])
+                tfidf_list.append(tfidf)
 
-        movies['features'] = csr_matrix((tfidf_list, (row_list, col_list)))
-
+        X_list.append(csr_matrix((tfidf_list, (row_list, col_list)), shape=(1, len(vocab))))
+    movies['features'] = X_list
     return movies, vocab
     pass
 
@@ -148,8 +143,8 @@ def cosine_sim(a, b):
       The cosine similarity, defined as: dot(a, b) / ||a|| * ||b||
       where ||a|| indicates the Euclidean norm (aka L2 norm) of vector a.
     """
-    ###TODO    
-    return a.dot(b.transpose())[0,0] / ((math.sqrt(sum(a.data**2))) * (math.sqrt(sum(a.data**2))))
+    ###TODO
+    return np.dot((a.toarray()[0]),(b.toarray()[0])) / ((np.sqrt(sum([i*i for i in a.toarray()[0]]))) * (np.sqrt(sum([i*i for i in b.toarray()[0]]))))
     pass
 
 def make_predictions(movies, ratings_train, ratings_test):
@@ -175,7 +170,6 @@ def make_predictions(movies, ratings_train, ratings_test):
       A numpy array containing one predicted rating for each element of ratings_test.
     """
     ###TODO
-    # print(movies.features)
     prediction_list = []
     for test_index, test_row in ratings_test.iterrows():
         cosine_sum = 0.0
@@ -196,7 +190,6 @@ def make_predictions(movies, ratings_train, ratings_test):
     
     return np.array(prediction_list)
     pass
-
 
 def mean_absolute_error(predictions, ratings_test):
     """DONE.
