@@ -84,6 +84,7 @@ def featurize(movies):
       - The vocab, a dict from term to int. Make sure the vocab is sorted alphabetically as in a2 (e.g., {'aardvark': 0, 'boy': 1, ...})
     """
     ###TODO
+    genre_list = []
     for genres in movies['tokens']:
         for genre in genres:
             genre_list.append(genre)
