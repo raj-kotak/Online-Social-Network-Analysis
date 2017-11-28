@@ -1,0 +1,6 @@
+Number of positive instances found: 27
+Number of negative instances found: 89
+
+One example from each class:
+Example for positive instance: Cryptocurrency today is similar to the tech boom in 1994. @forbes 
+Example for negative instance: Crypto Market Surges Past $300 Billion, Sights Set on JPMorgan Chase &gt; Read now &gt;… https://t.co/epCsOfCewP
