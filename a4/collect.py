@@ -31,8 +31,8 @@ def robust_request(twitter, resource, params, max_tries=5):
 
 def get_tweets(twitter):
   tweets = robust_request(twitter, 'search/tweets', {'count':1000,'q':'cryptocurrency -filter:retweets'}, max_tries=5)
-  print("no of tweets are ", len([print(t['text'], "\n") for t in tweets]))
-  f = open('tweets.txt', 'w+', encoding='utf-8')
+  
+  f = open('tweets_demo.txt', 'w+', encoding='utf-8')
   for tweet in tweets:
     f.write(tweet['text']+"\n")
   f.close()
@@ -40,12 +40,12 @@ def get_tweets(twitter):
   return tweets
 
 def get_users_and_friends(twitter, tweets):
-  f = open('users_friends.txt', 'w+')
+  f = open('users_friends_demo.txt', 'w+')
 
   users_list = []
   for tweet in tweets:
     users_list.append(tweet['user']['screen_name'])
-  print("no of users are ", len(set(users_list)))
+  
   user_friends_list = []
   for user in set(users_list):
     user_friends_req = robust_request(twitter, 'friends/ids', {'screen_name':user, 'count':2000}, max_tries=5)
@@ -73,22 +73,20 @@ def download_affin():
 def separate_data(afinn):
    pos_words=set([key for key, value in afinn.items() if value>=0])
    f_pos = open('pos.txt', 'w+')
-  #  [f_pos.write(word+'\n') for word in pos_words]
    for word in pos_words:
      f_pos.write(word+'\n')
    f_pos.close()
 
    neg_words = set([key for key, value in afinn.items() if value<0])
    f_neg = open('neg.txt', 'w+')
-  #  [f_neg.write(word+'\n') for word in neg_words]
    for word in neg_words:
      f_neg.write(word+'\n')
    f_neg.close()
    pass
 
 def main():
-  # afinn = download_affin()
-  # separate_data(afinn)
+  afinn = download_affin()
+  separate_data(afinn)
   twitter = get_twitter()
   tweets = get_tweets(twitter)
   get_users_and_friends(twitter, tweets)

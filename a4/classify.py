@@ -342,7 +342,7 @@ def main():
         elif t[0] == 0:
             neg_class_counter += 1
             neg_instances.append(t[1])
-
+    
     f_classify = open('classifications.txt', 'w+', encoding='utf-8')
     
     f_classify.write('Number of positive instances found: '+str(pos_class_counter)+'\n')
