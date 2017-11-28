@@ -6,7 +6,6 @@ As given, the entire assignemnt is divided into 4 parts, as follows:
     Initaially for knowledge, The social network is analysed by collecting the tweets based on a keyword which is most trending. 
     I have collected tweets on "Cryptocurrency", which is quite a trending topic on social media.
 
-
 collect.py:
     The key purpose of this file is to collect data using Twitter's REST API to search tweets, 
     I have collected 1000 tweets on keyword by filtering out the re-tweets in order to have a unique tweets. 
