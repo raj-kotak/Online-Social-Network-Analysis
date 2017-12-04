@@ -1,13 +1,12 @@
 import networkx as nx
 import urllib.request
 
+
 def download_data():
     urllib.request.urlretrieve('http://cs.iit.edu/~culotta/cs579/a1/edges.txt.gz', 'edges.txt.gz')
 
 def read_graph():
     return nx.read_edgelist('edges.txt.gz', delimiter='\t')
-
-
 
 def jaccard_wt(graph, node):
   """
@@ -23,7 +22,6 @@ def jaccard_wt(graph, node):
   score_list = []
   
   nn = graph.neighbors(node)
-
   unique_nn = set(nn)
 
   for n in graph.nodes():
@@ -37,15 +35,15 @@ def jaccard_wt(graph, node):
       potential_nodes.append(n)
       potential_tuple = tuple(potential_nodes)
 
-      degree_sum_A = degree_sum_A + graph.degree(n)
+      degree_sum_A += graph.degree(n)
 
       neighbours_friends = graph.neighbors(n)
       for y in neighbours_friends:
-        degree_sum_B = degree_sum_B+(graph.degree(y))
+        degree_sum_B += graph.degree(y)
 
       mutual_friends = list(set(nn).intersection(neighbours_friends))
       for x in mutual_friends:
-        degree_sum_AB = degree_sum_AB + (1 / graph.degree(x))
+        degree_sum_AB += (1 / graph.degree(x))
 
       sim = (degree_sum_AB / ((1 / degree_sum_A) + (1 / degree_sum_B)))
 
@@ -57,7 +55,6 @@ def jaccard_wt(graph, node):
       score_list.append(sim_tuple)
     
   return score_list
-
   pass
 
 def main():
@@ -72,8 +69,7 @@ def main():
   max_deg_node.append(max(node_deg_dict, key=node_deg_dict.get))
   
   score_list = jaccard_wt(graph, max_deg_node[0])
-  for score_edge in score_list:
-    print(score_edge)
-
+  potential_scores_list = [t for t in score_list if t[1] > 0.0]
+  print("There are %d potential egdes for the target node." % len(potential_scores_list))
 if __name__ == '__main__':
   main()
