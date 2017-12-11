@@ -1,5 +1,3 @@
-Bonus -- 10 points
-
 Recall our use of the Jaccard index to quantify the similarity between two nodes in a social network. In this assignment, you will implement a modified version of Jaccard as follows:
 $$
 jaccard_{wt}(A, B) = \frac{\sum_{i \in (A \cap B)} \frac{1}{deg(i)}}{\frac{1}{\sum_{i \in A} deg(i)} + \frac{1}{\sum_{j \in B} deg(j)}}
