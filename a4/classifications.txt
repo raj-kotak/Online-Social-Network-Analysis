@@ -1,6 +1,0 @@
-Number of positive instances found: 30
-Number of negative instances found: 86
-
-One example from each class:
-Example for positive instance: I agree with this statement because ultimate a CryptoCurrency is only of value if there is a strong and viable... https://t.co/ktPV2zrbLC
-Example for negative instance: It's 1994 In Cryptocurrency via @forbes https://t.co/97NnxVANvC
