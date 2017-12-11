@@ -1,0 +1,102 @@
+Enter your responses inline below and push this file to your private GitHub
+repository.
+
+
+1. Assume I plan to use the friend_overlap function above to quantify the
+similarity of two users. E.g., because 344 is larger than 1, I conclude that
+Jill Stein and Gary Johnson are more similar than Hillary Clinton and Donald
+Trump.
+
+How is this approach misleading? How might you fix it?
+
+Answer:-
+This approach is misleading because if you check the friends count for Jill Stein 
+and Gary Johnson are 1648 and 3481 respectively, whereas the friends count for 
+Hillary Clinton and Donald Trump are 748 and 42 people respectively. 
+We can analyse and conclude that, as Jill Stein and Gary Johnson have 
+more friends count, their overlap count will be more. This does not 
+conclude that they are more similar than Hillary Clinton and Donald Trump.
+
+One easy way to fix this is to use Jaccard Index which is one of the statistics used 
+to compare the similarity and diversity of sample sets.
+	J(A, B) = |A Intersection B| / |A U B|
+		= |A U B| / |A| + |B| - |A Intersection B|
+ 
+Another way is to calculate percentage of the common friends between all the 4 candidates.
+Then, subract the percentages of (Jill Stein and Gary Johnson) and that of (Hillary Clinton and Donald Trump)
+Thus we get the similarities between by comparing these two differences. Lesser the differences more similar
+they are.
+Calculations:
+Common friends between Jill Stein and Gary Johnson: 238
+DrJillStein: (238/1648)*100 = 14.44%
+GivGaryJohnson: (238/3481)*100 = 6.83%
+
+Common friends between Hillary Clinton and Donald Trump: 1
+HillaryClinton: (1/762)*100 = 0.13%
+realDonaldTrump: (1/45)*100 = 2.22%
+
+Now, differences:
+A = 14.44 - 6.83
+  = 7.61
+B = 2.22 - 0.13
+  = 2.09
+
+Therefore, from above we notice that A is greater than B, i.e., Hillary Clinton and Donald Trump are more 
+similar than Jill Stein and Gary Johnson.
+
+
+2. Looking at the output of your followed_by_hillary_and_donald function, why
+do you think this user is followed by both Hilary Clinton and Donald Trump,
+who are rivals? Do some web searches to see if you can find out more
+information.
+
+
+Answer:-
+From the output we conclude that the common user who is followed by both Hilary Clinton and Donald Trump is Whitehouse.
+We know that both Hillary Clinton and Donald Trump were the candidates for the Presidential Election 2016. 
+Also, we know that Whitehouse is the official residence and workplace of the President of the United States.
+Therefore, both Hillary Clinton and Donald Trump have followed the user Whitehouse.
+
+
+
+3. There is a big difference in how many accounts each candidate follows (Gary
+Johnson follows over 3K accounts, while Donald Trump follows less than
+50). Why do you think this is? How might that affect our analysis?
+
+Answer:- 
+Donald Trump is an American business man and also the Republican Party candidate for President of the United States in the 2016 election.
+Gary Earl Johnson is also an American businessman, author and the Libertarian Party candidate for the Presidential elections 2016.
+Donald Trump is more of a famous personality than Gary Johnson, so Donald Trump does not need to follow more people as he already has a 
+well established profile. While Gary Johnson, who is not as famous as Donald Trump, has to follow more people as he does not have a more 
+established profile.
+This surely affects our analysis as we are analysing how often each friend is followed and also how many shared accounts with respect to 
+other candidates. As Gary Johnson follows more people, there will be more common friends between them and hence will return more 
+overlapping friends with respect to other candidates. Similarly for Donald Trump, as he follows quite less people, there will be less 
+common friends and therefore will return quite less overlapping friends with respect to other candidates.
+
+
+4. The follower graph we've collected is incomplete. To expand it, we would
+have to also collect the list of accounts followed by each of the
+friends. That is, for each user X that Donald Trump follows, we would have to
+also collect all the users that X follows. Assuming we again use the API call
+https://dev.twitter.com/rest/reference/get/friends/ids, how many requests will
+we have to make? Given how Twitter does rate limiting
+(https://dev.twitter.com/rest/public/rate-limiting), approximately how many
+minutes will it take to collect this data?
+
+Answer:-
+Count of friends for each candidate:
+DrJillStein 4159
+GovGaryJohnson 3124
+HillaryClinton 748
+realDonaldTrump 42
+
+So to get the total requests for accounts followed by each of the friends of candidates, we add all the friends count
+which gives us the total requests:
+	Total requests = 1648 + 3481 + 762 + 45
+	       	       = 5936 requests
+
+Considering rate limit for the requests (GET requests: 15 calls every 15 minutes):
+	Minutes required = Approximately (5936 Minutes + Execution time)
+	to collect this 
+	data
